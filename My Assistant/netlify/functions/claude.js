@@ -45,11 +45,6 @@ if (!jsonMatch) {
   throw new Error("No valid JSON found in Claude response");
 }
 
-const rawText = data.content[0].text;
-const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-if (!jsonMatch) {
-  throw new Error("No valid JSON found in Claude response");
-}
 const result = JSON.parse(jsonMatch[0]);
 return {
   statusCode: 200,
