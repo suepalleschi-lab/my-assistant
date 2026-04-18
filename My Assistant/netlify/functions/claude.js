@@ -36,18 +36,23 @@ Type must be exactly one of: reminder, calendar, note, email.`;
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
 
-    const result = JSON.parse(data.content[0].text);
+    const rawText = data.content[0].text;
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(result)
-    };
+// Extract JSON safely
+const jsonMatch = rawText.match(/\{[\s\S]*\}/);
 
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message })
-    };
-  }
+if (!jsonMatch) {
+  throw new Error("No valid JSON found in Claude response");
+}
+
+const rawText = data.content[0].text;
+const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+if (!jsonMatch) {
+  throw new Error("No valid JSON found in Claude response");
+}
+const result = JSON.parse(jsonMatch[0]);
+return {
+  statusCode: 200,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(result)
 };
