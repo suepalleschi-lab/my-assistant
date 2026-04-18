@@ -11,7 +11,6 @@ try {
 const { text } = JSON.parse(event.body || ‘{}’);
 const apiKey = process.env.ANTHROPIC_API_KEY;
 
-```
 if (!text || !apiKey) {
   return {
     statusCode: 400,
@@ -21,12 +20,10 @@ if (!text || !apiKey) {
 }
 
 const systemPrompt = `You are a personal assistant. Classify the user input and return ONLY a valid JSON object with no other text:
-```
 
 {“type”:“reminder”,“title”:“brief title”,“date”:“ISO date if relevant or null”,“body”:“full content”,“recipient”:“email recipient or null”}
 Type must be exactly one of: reminder, calendar, note, email.`;
 
-```
 const response = await fetch('https://api.anthropic.com/v1/messages', {
   method: 'POST',
   headers: {
@@ -35,7 +32,7 @@ const response = await fetch('https://api.anthropic.com/v1/messages', {
     'content-type': 'application/json'
   },
   body: JSON.stringify({
-    model: 'claude-sonnet-4-5',
+    model: 'claude-sonnet-4-5-20251001',
     max_tokens: 1024,
     system: systemPrompt,
     messages: [{ role: 'user', content: text }]
@@ -59,7 +56,6 @@ return {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(result)
 };
-```
 
 } catch (err) {
 return {
