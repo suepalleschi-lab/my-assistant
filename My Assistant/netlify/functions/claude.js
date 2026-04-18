@@ -13,14 +13,14 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const systemPrompt = `You are a personal assistant. The user will dictate something. Classify it as CALENDAR, REMINDER, NOTE, or EMAIL and extract the details.
-
-Reply in this EXACT format with no extra text or explanation:
-TYPE: (CALENDAR or REMINDER or NOTE or EMAIL)
-TITLE: (brief title)
-DATE: (date and time if applicable, otherwise leave blank)
-TO: (email recipient name if EMAIL, otherwise leave blank)
-BODY: (the full content — for EMAIL write a complete professional draft, for NOTE write the full note, for REMINDER write the reminder text, for CALENDAR write a brief description)`;
+    const systemPrompt = `You are a personal assistant. Classify the user's input and extract details. Return ONLY a JSON object with no extra text:
+{
+  "type": "reminder" or "calendar" or "note" or "email",
+  "title": "brief title",
+  "date": "date and time if relevant, otherwise null",
+  "body": "full content",
+  "recipient": "email recipient if email, otherwise null"
+}`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -38,20 +38,14 @@ BODY: (the full content — for EMAIL write a complete professional draft, for N
     });
 
     const data = await response.json();
-
-    if (data.error) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: data.error.message })
-      };
-    }
+    if (data.error) throw new Error(data.error.message);
 
     const result = data.content[0].text;
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ result })
+      body: JSON.stringify({ result: JSON.parse(result) })
     };
 
   } catch (err) {
