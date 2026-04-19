@@ -8,7 +8,7 @@ exports.handler = async function (event, context) {
   }
 
   try {
-    const { text } = JSON.parse(event.body || '{}');
+    const { text, now, timezone } = JSON.parse(event.body || '{}');
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!text || !apiKey) {
@@ -30,9 +30,12 @@ Use exactly this format:
   "title": "short useful title",
   "date": "ISO datetime string or null",
   "end_date": "ISO datetime string or null",
-  "body": "full formatted content",
+  "body": "full formatted content or short description",
   "recipient": "recipient name or email for email, otherwise null"
 }
+
+Current local datetime: ${now || 'unknown'}
+Timezone: ${timezone || 'Australia/Sydney'}
 
 Rules:
 - Use "email" when the user is dictating, drafting, reviewing, rewriting, or cleaning up a message or email.
@@ -44,17 +47,40 @@ Rules:
   - put the subject line in "title"
   - put the full email body in "body"
   - use "recipient" if clearly mentioned, otherwise null
+
 - Use "reminder" for tasks, things to remember, or follow-ups.
-- Use "calendar" for events, meetings, appointments, or anything scheduled at a time/date.
-- If a clear date or time is mentioned, convert it into a full ISO datetime string for "date".
+
+- Use "calendar" for events, meetings, appointments, or anything scheduled.
+
+- For calendar events:
+  - interpret natural speech like:
+    "meeting at 2", "tomorrow 3pm", "next Tuesday 11", "for 1 hour"
+  - if time is given without am/pm → assume daytime (e.g. 2 = 2pm)
+  - if date is not specified:
+    - use today if the time is still in the future
+    - otherwise use tomorrow
+  - ALWAYS return a full ISO datetime string
+
 - For "end_date":
-  - If the user mentions a duration (e.g. "for 1 hour", "30 minute meeting"), calculate end_date from date + duration
-  - If the user mentions an end time (e.g. "2pm to 3:30pm"), use that as end_date
-  - If no duration or end time is mentioned, default to date + 1 hour
-  - If date is null, end_date must also be null
-- "title" should be short and useful.
-- "body" should contain the full cleaned content.
-- "recipient" is only for email. For reminder and calendar, set it to null.`;
+  - if duration is mentioned → calculate it
+  - if end time is given → use it
+  - if neither → default to +1 hour
+  - if date is null → end_date must be null
+
+- "title" should be short and useful
+
+- For email:
+  - "body" = full cleaned email
+
+- For reminder:
+  - "body" = reminder text
+
+- For calendar:
+  - "body" can be short or empty
+
+- "recipient":
+  - only for email
+  - otherwise null`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -96,6 +122,7 @@ Rules:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(result)
     };
+
   } catch (err) {
     return {
       statusCode: 500,
