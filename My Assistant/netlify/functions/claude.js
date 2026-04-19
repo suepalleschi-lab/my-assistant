@@ -29,6 +29,7 @@ Use exactly this format:
   "type": "email" | "reminder" | "calendar",
   "title": "short useful title",
   "date": "ISO datetime string or null",
+  "end_date": "ISO datetime string or null",
   "body": "full formatted content",
   "recipient": "recipient name or email for email, otherwise null"
 }
@@ -45,8 +46,12 @@ Rules:
   - use "recipient" if clearly mentioned, otherwise null
 - Use "reminder" for tasks, things to remember, or follow-ups.
 - Use "calendar" for events, meetings, appointments, or anything scheduled at a time/date.
-- If a clear date or time is mentioned, convert it into a full ISO datetime string.
-- If no clear date or time is given, use null.
+- If a clear date or time is mentioned, convert it into a full ISO datetime string for "date".
+- For "end_date":
+  - If the user mentions a duration (e.g. "for 1 hour", "30 minute meeting"), calculate end_date from date + duration
+  - If the user mentions an end time (e.g. "2pm to 3:30pm"), use that as end_date
+  - If no duration or end time is mentioned, default to date + 1 hour
+  - If date is null, end_date must also be null
 - "title" should be short and useful.
 - "body" should contain the full cleaned content.
 - "recipient" is only for email. For reminder and calendar, set it to null.`;
